@@ -1,6 +1,67 @@
 ﻿#ifndef MY_LIST_H_INCLUDED_
 #define MY_LIST_H_INCLUDED_
 
+#include <iostream>
+#include <iomanip>
+#include <string>
+using std::string;
+
+#include <iterator>
+
+
+struct Student
+{
+	string name;
+	string group;
+	int year;
+
+	friend std::ostream& operator<<(std::ostream& os, const Student& a)
+	{
+		using std::setw;
+		os << setw(15) << a.name << setw(15) << a.group <<
+			setw(8) << a.year;
+		return os;
+	}
+};
+
+//***********************************************************************************************
+
+template<class Container>
+class asso_insert_iterator : public std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+protected:
+	Container& container;
+public:
+	explicit asso_insert_iterator(Container& c) : container(c) {}
+
+	asso_insert_iterator<Container>& operator=(const typename Container::value_type& value)
+	{
+		container.insert(value);
+		return *this;
+	}
+
+	asso_insert_iterator<Container>& operator*() { return *this; }
+
+	asso_insert_iterator<Container>& operator++() { return *this; }
+	asso_insert_iterator<Container>& operator++(int) { return *this; }
+
+
+};
+
+template<class Container>
+inline asso_insert_iterator<Container> asso_inserter(Container& c)
+{
+	return asso_insert_iterator<Container>(c);
+}
+
+
+
+
+//***********************************************************************************************
+
+
+
+
 template<typename Type>
 class List
 {
@@ -21,7 +82,7 @@ private:
 
 	Node* head;
 	Node* tail;
-	int size;
+	int _size;
 
 	List(const List&) = delete;      //не точно
 	List& operator=(const List&) = delete;
@@ -29,8 +90,8 @@ public:
 	List();
 	~List();
 
-	int get_size() const { return size; }
-	bool empty() const { return !size; }
+	inline int size() const { return _size; }
+	inline bool empty() const { return !_size; }
 
 	Type& front();
 	const Type& front() const;
@@ -43,13 +104,14 @@ public:
 	void pop_front();
 	void clear();
 	void insertAt(const Type& data, int index);
+	//insertAt(List::iterator before, const T &value)
 	void removeAt(int index);
 	Type& operator[](int index);
 	const Type& operator[](int index) const;
 };
 
 template<typename Type>
-List<Type>::List() : head(nullptr), tail(nullptr), size(0) {}
+List<Type>::List() : head(nullptr), tail(nullptr), _size(0) {}
 
 template<typename Type>
 List<Type>::~List()
@@ -60,14 +122,14 @@ List<Type>::~List()
 template<typename Type>
 Type& List<Type>::front()
 {
-	if (!size)
+	if (!_size)
 		throw std::exception("list iterator not deferencable");
 	return head->data;
 }
 template<typename Type>
 const Type& List<Type>::front() const
 {
-	if (!size)
+	if (!_size)
 		throw std::exception("list iterator not deferencable");
 	return head->data;
 }
@@ -75,14 +137,14 @@ const Type& List<Type>::front() const
 template<typename Type>
 Type& List<Type>::back()
 {
-	if (!size)
+	if (!_size)
 		throw std::exception("list iterator not deferencable");
 	return tail->data;
 }
 template<typename Type>
 const Type& List<Type>::back() const
 {
-	if (!size)
+	if (!_size)
 		throw std::exception("list iterator not deferencable");
 	return tail->data;
 }
@@ -100,7 +162,7 @@ void List<Type>::push_back(const Type& data)
 		tail->pNext = new Node(data, nullptr, tail);
 		tail = tail->pNext;
 	}
-	size++;
+	_size++;
 }
 
 template<typename Type>
@@ -116,7 +178,7 @@ void List<Type>::push_front(const Type& data)
 		head->pPrev = new Node(data, head);
 		head = head->pPrev;
 	}
-	size++;
+	_size++;
 }
 
 template<typename Type>
@@ -136,7 +198,7 @@ void List<Type>::pop_back()
 		delete tail->pNext;
 		tail->pNext = nullptr;
 	}
-	size--;
+	_size--;
 }
 
 template<typename Type>
@@ -156,32 +218,32 @@ void List<Type>::pop_front()
 		delete head->pPrev;
 		head->pPrev = nullptr;
 	}
-	size--;
+	_size--;
 }
 
 template<typename Type>
 void List<Type>::clear()
 {
-	while (size)
+	while (_size)
 		pop_front();
 }
 
 template<typename Type>
 void List<Type>::insertAt(const Type& data, int index)
 {
-	if (index < 0 || index > size) throw std::out_of_range("Invalid index");
+	if (index < 0 || index > _size) throw std::out_of_range("Invalid index");
 
 	if (!index)
 		push_front(data);
-	else if (index == size)
+	else if (index == _size)
 		push_back(data);
 	else
 	{
 		Node* need;
-		if (index >= size / 2)
+		if (index >= _size / 2)
 		{
 			need = tail;
-			for (int i = 0; i < (size - index); i++)
+			for (int i = 0; i < (_size - index); i++)
 				need = need->pPrev;
 			need->pNext = need->pNext->pPrev = new Node(data, need->pNext, need);
 		}
@@ -192,26 +254,26 @@ void List<Type>::insertAt(const Type& data, int index)
 				need = need->pNext;
 			need->pNext = need->pNext->pPrev = new Node(data, need->pNext, need);
 		}
-		size++;
+		_size++;
 	}	
 }
 
 template<typename Type>
 void List<Type>::removeAt(int index)
 {
-	if (index < 0 || index >= size) throw std::out_of_range("Invalid index");
+	if (index < 0 || index >= _size) throw std::out_of_range("Invalid index");
 
 	if (!index)
 		pop_front();
-	else if (index == size - 1)
+	else if (index == _size - 1)
 		pop_back();
 	else
 	{
 		Node* need;
-		if (index >= size / 2)
+		if (index >= _size / 2)
 		{
 			need = tail;
-			for (int i = 0; i < (size - index); i++)
+			for (int i = 0; i < (_size - index); i++)
 				need = need->pPrev;
 			Node* toDelete = need->pNext;
 			need->pNext = toDelete->pNext;
@@ -228,20 +290,20 @@ void List<Type>::removeAt(int index)
 			need->pNext->pPrev = need;
 			delete toDelete;
 		}
-		size--;
+		_size--;
 	}
 }
 
 template<typename Type>
 Type& List<Type>::operator[](int index)
 {
-	if (index < 0 || index >= size) throw std::out_of_range("Invalid index");
+	if (index < 0 || index >= _size) throw std::out_of_range("Invalid index");
 
 	Node* need;
-	if (index >= size / 2)
+	if (index >= _size / 2)
 	{
 		need = tail;
-		for (int i = 0; i < (size - index - 1); i++)
+		for (int i = 0; i < (_size - index - 1); i++)
 			need = need->pPrev;
 	}
 	else
@@ -257,13 +319,13 @@ Type& List<Type>::operator[](int index)
 template<typename Type>
 const Type& List<Type>::operator[](int index) const
 {
-	if (index < 0 || index >= size) throw std::out_of_range("Invalid index");
+	if (index < 0 || index >= _size) throw std::out_of_range("Invalid index");
 
 	Node* need;
-	if (index >= size / 2)
+	if (index >= _size / 2)
 	{
 		need = tail;
-		for (int i = 0; i < (size - index - 1); i++)
+		for (int i = 0; i < (_size - index - 1); i++)
 			need = need->pPrev;
 	}
 	else

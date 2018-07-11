@@ -1,24 +1,11 @@
 ﻿#include <iostream>
-#include <iomanip>
 #include <fstream>
-#include <string>
 #include "MyList.h"
+#include <set>
+#include <algorithm>
 
 using namespace std;
 
-struct Student
-{
-	string name;
-	string group;
-	int year;
-
-	friend ostream& operator<<(ostream& os, const Student& a)
-	{
-		os << setw(15) << a.name << setw(15) << a.group <<
-			setw(8) << a.year;
-		return os;
-	}
-};
 
 template<class T>
 void show(const List<T>& ml);
@@ -50,19 +37,23 @@ int main()
 		cout << list.front() << endl;
 		cout << list.back() << endl;
 		
-		cout << "size: " << list.get_size() << endl;
+		cout << "size: " << list.size() << endl;
 	}
 	catch (const std::exception& ex) { cout << ex.what() << endl; }
+
 
 
 
 	return 0;
 }
 
+
+
+
 template<class T>
 void show(const List<T>& ml)
 {
-	for (int i = 0; i < ml.get_size(); i++)
+	for (int i = 0; i < ml.size(); i++)
 		cout << setw(5) << i + 1 << ml[i] << endl;
 }
 
